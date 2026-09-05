@@ -1,71 +1,71 @@
 # Financial Market Monitoring & Reporting Tool
 
-Automatizovan sistem koji sam **prikuplja → analizira → cuva → izvjestava** o stanju
-finansijskih trzista. Povlaci OHLCV podatke sa Twelve Data API-ja, racuna tehnicke i
-statisticke pokazatelje u Pandasu, detektuje zanimljiva kretanja i generise
-formatiran Excel report sa dashboardom, tabelama, korelacionom matricom i grafikonom.
+An automated system that **collects → analyzes → stores → reports** on the state of
+financial markets. Pulls OHLCV data from the Twelve Data API, calculates technical and
+statistical indicators in Pandas, detects interesting price movements, and generates a
+formatted Excel report with a dashboard, tables, correlation matrix, and chart.
 
-Koristi **besplatan Twelve Data API kljuc** (bez kartice, 800 poziva/dan) —
-registracija traje minut na [twelvedata.com](https://twelvedata.com).
+Uses a **free Twelve Data API key** (no credit card, 800 calls/day) —
+sign-up takes a minute at [twelvedata.com](https://twelvedata.com).
 
 ---
 
-## Sta prati
+## What it tracks
 
-15 instrumenata u tri kategorije:
+15 instruments across three categories:
 
-| Kategorija | Instrumenti |
+| Category | Instruments |
 |---|---|
 | Stocks / ETF | Apple, Microsoft, NVIDIA, Amazon, JPMorgan, S&P 500 ETF, Nasdaq 100 ETF |
 | FX | EUR/USD, GBP/USD, USD/JPY, USD/CHF |
-| Commodities / Crypto | Zlato, Srebro, Bitcoin, Ethereum |
+| Commodities / Crypto | Gold, Silver, Bitcoin, Ethereum |
 
-Lista se mijenja u `config.py` — dodavanje instrumenta je jedan red.
+The list is configured in `config.py` — adding an instrument is a single line.
 
-## Sta racuna
+## What it calculates
 
-- Prinosi: 1d, 5d, 20d, YTD, 1Y
-- Moving averages 20 / 50 / 200 + trend (MA50 vs MA200) + odnos cijene prema MA200
-- RSI(14) po Wilderovom izgladjivanju
-- MACD (12/26/9) i histogram
-- Anualizovana volatilnost (20-dnevna)
-- Volume i odnos prema 20-dnevnom prosjeku
-- 52-nedjeljni maksimum/minimum i udaljenost cijene od njih
-- Max drawdown od vrha
-- Beta naspram S&P 500 ETF-a
-- Korelaciona matrica dnevnih prinosa
+- Returns: 1d, 5d, 20d, YTD, 1Y
+- Moving averages 20 / 50 / 200 + trend (MA50 vs MA200) + price vs MA200
+- RSI(14) using Wilder's smoothing
+- MACD (12/26/9) and histogram
+- Annualized volatility (20-day)
+- Volume and ratio vs 20-day average
+- 52-week high/low and distance from them
+- Max drawdown from peak
+- Beta vs the S&P 500 ETF
+- Correlation matrix of daily returns
 
-## Alerti
+## Alerts
 
-Rule-based detekcija, pragovi u `config.py`:
+Rule-based detection, thresholds configured in `config.py`:
 
-| Tip | Uslov (default) |
+| Type | Condition (default) |
 |---|---|
-| Promjena cijene | \|dnevna promjena\| ≥ 3% |
+| Price change | \|daily change\| ≥ 3% |
 | RSI overbought / oversold | RSI ≥ 70 / RSI ≤ 30 |
-| Volume anomalija | volume ≥ 2× 20-dnevni prosjek |
-| Blizu 52w maksimuma / minimuma | unutar 2% od godisnjeg ekstrema |
-| Drawdown | pad od vrha ≥ 20% |
-| Test MA200 | cijena unutar 1% od MA200 |
+| Volume anomaly | volume ≥ 2× 20-day average |
+| Near 52w high / low | within 2% of the yearly extreme |
+| Drawdown | drop from peak ≥ 20% |
+| MA200 test | price within 1% of MA200 |
 
 ## Excel report
 
-| Sheet | Sadrzaj |
+| Sheet | Content |
 |---|---|
-| **Market Overview** | Dashboard sa **pravim Excel formulama** — sazetak trzista, alerti, pregled po kategorijama, top 5 najjacih/najslabijih, alerti po tipu. Pragovi su u plavim celijama koje mozes mijenjati i formule se same preracunaju. |
-| **Stocks / FX / Commodities** | Zadnje stanje po instrumentu: OHLC, prinosi, volume, 52w raspon, volatilnost, RSI, trend |
-| **Technical Analysis** | Svi pokazatelji na jednom mjestu, sa betom |
-| **Alerts** | Sta je flagovano, koja vrijednost i zasto |
-| **Correlation** | Korelaciona matrica sa color scale formatiranjem |
-| **Price History** | Normalizovano kretanje (prvi dan = 100) + linijski grafikon |
-| **Pivot Data** | Long-format podaci (sa kolonama Godina/Mjesec) spremni kao izvor za tvoje pivot tabele |
+| **Market Overview** | Dashboard with **live Excel formulas** — market summary, alerts, breakdown by category, top 5 gainers/losers, alerts by type. Thresholds sit in blue input cells you can edit, and the formulas recalculate automatically. |
+| **Stocks / FX / Commodities** | Latest snapshot per instrument: OHLC, returns, volume, 52w range, volatility, RSI, trend |
+| **Technical Analysis** | All indicators in one place, including beta |
+| **Alerts** | What was flagged, the value, and why |
+| **Correlation** | Correlation matrix with color-scale formatting |
+| **Price History** | Normalized price movement (day 1 = 100) + line chart |
+| **Pivot Data** | Long-format data (with Year/Month columns) ready as a source for your own pivot tables |
 
-Svi data sheetovi su prave **Excel Tabele** (`tbl_Stocks`, `tbl_Technical`, …), pa se
-automatski prosiruju kad skripta doda nove redove — pivot tabele i formule ostaju tacne.
+All data sheets are proper **Excel Tables** (`tbl_Stocks`, `tbl_Technical`, …), so they
+expand automatically as the script adds new rows — pivot tables and formulas stay accurate.
 
 ---
 
-## Pokretanje
+## Running it
 
 ```bash
 python -m venv venv
@@ -73,69 +73,71 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 cp .env.example .env              # Windows: copy .env.example .env
-# otvori .env i upisi svoj kljuc sa https://twelvedata.com
+# open .env and paste in your key from https://twelvedata.com
 
 python main.py
 ```
 
-Prvi run povlaci duboku historiju (260 tacaka po instrumentu) da odmah rade MA200
-i svi ostali indikatori. Svaki sljedeci run povlaci samo par svjezih tacaka.
-Report se snima u `reports/market_report.xlsx`.
+The first run pulls deep history (260 data points per instrument) so MA200 and every
+other indicator work right away. Every following run only pulls a few fresh points.
+The report is saved to `reports/market_report.xlsx`.
 
-### Opcije
+### Options
 
 ```bash
-python main.py --no-fetch              # radi nad postojecim history.csv, bez mreze
-python main.py --schedule              # ostani upaljen, pokreni se svakih 12h
+python main.py --no-fetch              # run against the existing history.csv, no network
+python main.py --schedule              # keep running, refresh every 12h
 python main.py --schedule --interval-hours 6
-python main.py -v                      # detaljniji log
+python main.py -v                      # more detailed logging
 ```
 
-### Demo bez interneta / bez kljuca
+### Demo without internet / without a key
 
 ```bash
-python demo_data.py               # generise sinteticku historiju
-python main.py --no-fetch         # napravi report nad njom
+python demo_data.py               # generates synthetic history
+python main.py --no-fetch         # builds the report from it
 ```
 
 ---
 
-## Arhitektura
+## Architecture
 
 ```
 main.py            orchestrator + CLI + scheduling
-config.py          instrumenti, pragovi, periodi, putanje
-data_fetcher.py     Twelve Data API (iza MarketDataProvider interfejsa)
-storage.py          history.csv - upis, citanje, deduplikacija
-analytics.py        svi pokazatelji (Pandas)
-alerts.py            rule-based detekcija
-excel_writer.py       generisanje reporta (openpyxl)
-demo_data.py         sinteticki podaci za testiranje bez mreze/kljuca
+config.py          instruments, thresholds, periods, paths
+data_fetcher.py     Twelve Data API (behind the MarketDataProvider interface)
+storage.py          history.csv - write, read, deduplication
+analytics.py        all indicators (Pandas)
+alerts.py            rule-based detection
+excel_writer.py       report generation (openpyxl)
+demo_data.py         synthetic data for testing without network/key
 ```
 
-Dvije odluke vrijedne objasnjenja:
+Two decisions worth explaining:
 
-**Analitika ide u Pandasu, ne u Excel formulama.** RSI i rolling prozori u Excelu
-traze pomocne kolone i tesko se testiraju; u Pandasu su par linija i mijenjaju se
-jednim parametrom. Excel formule postoje samo na Overview sheetu, gdje im je vrijednost
-u tome sto dashboard ostaje ziv.
+**Analytics run in Pandas, not in Excel formulas.** RSI and rolling windows in Excel
+need helper columns and are hard to test; in Pandas they're a few lines and change with
+one parameter. Excel formulas exist only on the Overview sheet, where their value is
+in keeping the dashboard live.
 
-**Historija je odvojena od reporta.** `history.csv` je jedini izvor istine; Excel je
-izlaz koji se moze obrisati i regenerisati kad god. Deduplikacija ide po
-`(symbol, date)` sa prednoscu novijem podatku.
+**History is kept separate from the report.** `history.csv` is the single source of
+truth; the Excel file is an output that can be deleted and regenerated any time.
+Deduplication is by `(symbol, date)`, with newer data taking precedence.
 
-**Izvor podataka je apstrahovan** (`MarketDataProvider`) — `TwelveDataProvider` je
-trenutna implementacija, ali storage/analytics/alerts/excel_writer ne znaju niti mari
-im odakle podaci dolaze. Zamjena ili dodavanje drugog izvora ne dira ostatak sistema.
+**The data source is abstracted** (`MarketDataProvider`) — `TwelveDataProvider` is the
+current implementation, but storage/analytics/alerts/excel_writer don't know or care
+where the data comes from. Swapping or adding another source doesn't touch the rest
+of the system.
 
 ---
 
-## Ogranicenja
+## Limitations
 
-- Free tier Twelve Data: 8 poziva/minut, 800/dan. Za 15 instrumenata i refresh na 12h
-  (2 runa dnevno) to je ~30 poziva dnevno — daleko ispod limita.
-- FX parovi obicno nemaju volume kod vecine providera, pa volume alerti tamo ne rade.
+- Twelve Data free tier: 8 calls/minute, 800/day. For 15 instruments refreshed every
+  12h (2 runs a day), that's ~30 calls a day — well under the limit.
+- FX pairs typically don't carry volume with most providers, so volume alerts don't
+  fire for them.
 
-## Tehnologije
+## Technologies
 
 Python · Pandas · NumPy · Requests · openpyxl · Twelve Data API
