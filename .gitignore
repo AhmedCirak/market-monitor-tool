@@ -1,0 +1,18 @@
+# Podaci i izlazni reporti (regenerisu se pokretanjem)
+data/*.csv
+reports/*.xlsx
+logs/*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / editori
+.DS_Store
+.idea/
+.vscode/
+
+# Tajne
+.env
